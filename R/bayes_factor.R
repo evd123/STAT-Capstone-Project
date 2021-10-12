@@ -6,6 +6,7 @@ no_prior_information = FALSE
 predict = FALSE
 range_false_predicts = 10
 standardize = FALSE
+covariate_probabilities = NULL
 
 
 bayes_factor <- function(data, response, desired_sparsity, 
@@ -31,8 +32,30 @@ bayes_factor <- function(data, response, desired_sparsity,
     BIC_function(data)
     break
   }
+  
+  ### Second Layer of Decision Tree ()
+  if (is.null(covariate_probabilities) == FALSE){
+    if (ncol(data) <= 25){
+      bf_obj <- Bvs(formula = response ~ ., 
+          data=data.frame(data,response), 
+          prior.betas = "Robust",
+          prior.models = "User",
+          priorprobs = covariate_probabilities)
+    }
+    else{
+      bf_obj <- Bvs(formula = response ~ ., 
+          data=data.frame(data,response), 
+          prior.betas = "Robust",
+          prior.models = "User",
+          priorprobs = covariate_probabilities)
+    }
+  }
 }
 
 BIC_function <- function(data){
-  
+  full_lm = lm(score ~ 1, intercept_data)  # One mean with gauss residual
+  null_lm = lm(score ~ 0, intercept_data)  # Fixed mean at score = 0
+  BF_BIC = exp((BIC(null_lm) - BIC(full_lm))/2)  # From BICs to Bayes factor
+  BF_BIC  # Show it
+  # return BF for all possible models
 }
