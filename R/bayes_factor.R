@@ -115,9 +115,13 @@ BIC_function <- function(data, response){
   return(c(BIC_BFs, "Lowest Bayes Factor Corresponding to Most Significant Model:", min(BIC_BFs), BIC_BFs[which(BIC_BFs == min(BIC_BFs))-1]))
 }
 
-bayes_factor(data = df, response = y, no_prior_information = TRUE)
-bayes_factor(data = df, response = y, desired_sparsity = 0.2, desired_prior_effect=0.4)
-# Effects of Prior Probabilities
-bayes_factor(data = df, response = y, covariate_probabilities = c(0.1, 0.9,0.1,0.9))
-bayes_factor(data = df, response = y, covariate_probabilities = c(0.9, 0.1,0.9,0.1))
+# df <- simulate(n, column_names, type, variables, weights, replace, distribution_type, distribution_inf)
+# 
+# y <- 20*df$one + 10*df$three
+# 
+# bayes_factor(data = df, response = y, no_prior_information = TRUE)
+# bayes_factor(data = df, response = y, desired_sparsity = 0.2, desired_prior_effect=0.4)
+# # Effects of Prior Probabilities
+# bayes_factor(data = df, response = y, covariate_probabilities = c(0.1, 0.9,0.1,0.9))
+# bayes_factor(data = df, response = y, covariate_probabilities = c(0.9, 0.1,0.9,0.1))
 
