@@ -1,24 +1,18 @@
 library(BayesFactor)
 library(BayesVarSel)
+library(ggm)
 
-# Defaults
-no_prior_information = FALSE
-predict = FALSE
-range_false_predicts = 10
-standardize = FALSE
-covariate_probabilities = NULL
-desired_sparsity = NULL
-desired_prior_effect = NULL
-train_percent = NULL
-
-bayes_factor <- function(data, response, desired_sparsity, 
-                         predict, range_false_predicts, standardize,
-                         train, train_percent, desired_prior_effect,
-                         covariate_probabilities, no_prior_information){
+bayes_factor <- function(data, response, no_prior_information = FALSE,
+                         desired_sparsity = NULL, desired_prior_effect = NULL,
+                         covariate_probabilities = NULL,
+                         predict = FALSE, range_false_predicts = 10, 
+                         standardize = FALSE,
+                         train = FALSE, train_percent=NULL){
   ### CHECKS ###
   if (nrow(data) != length(response)){
-    return("Error! Please ensure that the number of elements in the response vector is the same
+    print("Error! Please ensure that the number of elements in the response vector is the same
            as the number of rows in the data data.frame.")
+    break
   }
   
   # Question for Emma: Will the return end the function or do I need a break above?
@@ -30,7 +24,10 @@ bayes_factor <- function(data, response, desired_sparsity,
   }
   
   if (train == TRUE) {
-    if (is.null(train_percent) == TRUE){return("Please input a percent to be set aside for training")}
+    if (is.null(train_percent) == TRUE){
+      print("Please input a percent to be set aside for training")
+      break
+      }
     train_data_length <- round(train_percent*nrow(data), digits = 0)
     train_data_ind <- sample(1:nrow(data), size = train_data_length, replace = FALSE)
     train <- data[train_data_ind]
@@ -42,29 +39,30 @@ bayes_factor <- function(data, response, desired_sparsity,
   
   ### First layer of Decision Tree (BIC Bayes Factor)
   if (no_prior_information == TRUE){
-    BIC_function(data)
+    return(BIC_function(data, response))
     break
   }
 
   ### Second Layer of Decision Tree ()
   if (is.null(covariate_probabilities) == FALSE){
-    for (prior in c("Robust", "gZellner", "Liangetal", "ZellnerSiow", "FLS")){
+    #for (prior in c("Robust", "gZellner", "Liangetal", "ZellnerSiow", "FLS")){
       # Small p
       if (ncol(data) <= 25){
-        paste0("bf_obj", prior) <- Bvs(formula = response ~ ., 
+        # paste0("bf_obj", prior)
+        a <- Bvs(formula = response ~ ., 
                       data=data.frame(data,response), 
-                      prior.betas = prior,
+                      prior.betas = "Robust",
                       prior.models = "User",
                       priorprobs = covariate_probabilities)
-        return(paste(prior) + paste0("bf_obj", prior))
-        coef <- BMAcoeff(paste0("bf_obj", prior))
+        return(a)
+        coef <- BMAcoeff(a)
         for (col in colnames(data)){
           return(histBMA(coef, covariate = col))
         }
         if (train == TRUE){
-          return(predict.Bvs(paste0("bf_obj", prior), test))
+          return(predict.Bvs(a), test)
         }
-      }
+     # }
       # Large p
       else{
         paste0("bf_obj", prior) <- GibbsBvs(formula = response ~ ., 
@@ -78,21 +76,21 @@ bayes_factor <- function(data, response, desired_sparsity,
   }
   
   ### Third Layer of Decision Tree (BayesFactor)
-  if ((desired_sparisty <= 0.4 && desired_prior_effect < 0.5) || 
+  if ((desired_sparsity <= 0.4 && desired_prior_effect > 0.5) || 
       (desired_sparsity <= 0.4 && is.null(desired_prior_effect) == TRUE) ||
-      (is.null(desired_sparsity) == TRUE && desired_prior_effect < 0.5)){
+      (is.null(desired_sparsity) == TRUE && desired_prior_effect > 0.5)){
     return(regressionBF(formula = response~., 
                         data= data.frame(data, reponse),
                         rscaleCont = "medium",
                         whichModels = "all"
                         ))
   }
-    if ((desired_sparisty >= 0.6 && desired_prior_effect > 0.5) || 
+    if ((desired_sparsity >= 0.6 && desired_prior_effect < 0.5) || 
         (desired_sparsity >= 0.6 && is.null(desired_prior_effect) == TRUE) ||
-        (is.null(desired_sparsity) == TRUE && desired_prior_effect > 0.5)){
+        (is.null(desired_sparsity) == TRUE && desired_prior_effect < 0.5)){
       return(regressionBF(formula = response~., 
                           data= data.frame(data, reponse),
-                          rscaleCont = "medium",
+                          rscaleCont = "ultrawide",
                           whichModels = "all"
       ))
     }
@@ -102,20 +100,24 @@ bayes_factor <- function(data, response, desired_sparsity,
                             rscaleCont = "wide",
                             whichModels = "all"
         ))
-        
-        # can i return two things here?
-
   }
-  
-  
 }
 
-BIC_function <- function(data){
-  full_lm = lm(score ~ 1, intercept_data)  # One mean with gauss residual
-  null_lm = lm(score ~ 0, intercept_data)  # Fixed mean at score = 0
-  BF_BIC = exp((BIC(null_lm) - BIC(full_lm))/2)  # From BICs to Bayes factor
-  BF_BIC  # Show it
-  # return BF for all possible models
+BIC_function <- function(data, response){
+  BIC_BFs <- c()
+  for (elem in powerset(colnames(data))){
+    full_lm = lm(y~., data.frame(response, data[,elem]))
+    null_lm = lm(response ~ 0, data.frame(response,data)) 
+    BF_BIC = exp(-0.5*(BIC(null_lm)-BIC(full_lm))) # convert BIC to Bayes Factor
+    BIC_BFs <- c(BIC_BFs, c(elem, BF_BIC))
+  }
+  print("Please be careful when using these results because this is a data based prior, so there can be issues associated with double-dipping because both the prior and likelihood are from the same sample. See object documentation for alternatives such as hierarchial modeling.")
+  return(c(BIC_BFs, "Lowest Bayes Factor Corresponding to Most Significant Model:", min(BIC_BFs), BIC_BFs[which(BIC_BFs == min(BIC_BFs))-1]))
 }
 
+bayes_factor(data = df, response = y, no_prior_information = TRUE)
+bayes_factor(data = df, response = y, desired_sparsity = 0.2, desired_prior_effect=0.4)
+# Effects of Prior Probabilities
+bayes_factor(data = df, response = y, covariate_probabilities = c(0.1, 0.9,0.1,0.9))
+bayes_factor(data = df, response = y, covariate_probabilities = c(0.9, 0.1,0.9,0.1))
 
