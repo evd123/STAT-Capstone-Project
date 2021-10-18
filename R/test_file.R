@@ -15,13 +15,17 @@ df <- simulate(n, column_names, type, variables, weights, replace, distribution_
 
 y <- 20*df$one + 10*df$three
 
-### EXAMPLE 2 ###
+
 
 bayes_factor(data = df, response = y, no_prior_information = TRUE)
 bayes_factor(data = df, response = y, desired_sparsity = 0.2, desired_prior_effect=0.6)
 # Effects of Prior Probabilities
 bayes_factor(data = df, response = y, covariate_probabilities = c(0.9, 0.1,0.9,0.1))
-bayes_factor(data = df, response = y, covariate_probabilities = c(0.1, 0.9,0.9,0.1))
+bayes_factor(data = df, response = y, covariate_probabilities = c(0.1, 0.9,0.1,0.9))
+
+
+### EXAMPLE 2 ###
+
 
 n <- 20
 column_names <- list("one", "two", "three")
