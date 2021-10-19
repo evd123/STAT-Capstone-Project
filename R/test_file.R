@@ -1,6 +1,24 @@
 #test_file
 
+## EXAMPLE (uncomment to use) ##
+n <- 20
+column_names <- list("one", "two", "three", "four", "five")
+type <- list("categorical", "numerical", "distributional", "numerical", "distributional")
+variables <- list(c("cat", "dog"), c(1, 2, 3), NA, 20:40, NA)
+weights <- list(c(0.3,0.7), c(0.3,0.3,0.4), NA, replicate(21, 1/21), NA)
+replace <- list(TRUE, TRUE, TRUE, FALSE, TRUE)
+distribution_type <- list(NA, NA, "rpois", NA, "rnorm")
+distribution_inf <- list(NA, NA, c(4), NA, c(10, 1))
+
+df <- simulate(n, column_names, type, variables, weights, replace, distribution_type, distribution_inf)
+df
+
+
+
 ### EXAMPLE 1 ###
+
+
+set.seed(100)
 
 n <- 20
 column_names <- list("one", "two", "three")
