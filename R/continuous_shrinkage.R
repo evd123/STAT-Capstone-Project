@@ -1,8 +1,9 @@
 ## Continuous Shrinkage Prior ##
 library(bayesreg)
 library(horseshoe)
+library(Hmisc)
 
-continous_shrinkage <- function(
+continuous_shrinkage <- function(
                   data, response, no_prior_information = FALSE,
                   desired_sparsity = NULL, desired_prior_effect = NULL,
                   covariate_probabilities = NULL,
@@ -15,17 +16,19 @@ continous_shrinkage <- function(
   }
   
   if (type == "horseshoe"){
-    horseshoe(response, data,method.tau = "truncatedCauchy")
+    results <- horseshoe(response, data.matrix(data), method.tau = "truncatedCauchy")
+    plot(response, (data.matrix(data))%*%results$BetaHat, col = c(rep("black", 80), rep("blue", 20)))
+    #xYplot(Cbind(results$BetaHat, results$LeftCI, results$RightCI) ~ 1:100)
+    #return(class(results$BetaHat))
+    #return(results$LeftCI)
+    return(c(results$BetaHat, results$LeftCI, results$RightCI))
   }
   else {
-    bayesreg(data.frame(data, response), prior = type)
+    results <- bayesreg(response ~., data.frame(data, response), prior = type)
+    #return(results$mu.beta)
+    return(summary(results))
+    #predict(results)
   }
-  
-  
-  
-  
-  
-  
 }
 
 
@@ -40,13 +43,8 @@ distribution_inf <- list(NA, NA, c(4))
 
 df <- simulate(n, column_names, type, variables, weights, replace, distribution_type, distribution_inf)
 df <- df[,c(2,3)]
-y <- 30*df$three
+y <- 30*df$three + rnorm(1)
 
-obj <- bayesreg(y~.,data.frame(df,y), prior = "hs")
-
-mean(obj$beta[1,])
-mean(obj$beta[2,])
-
-
-install.packages("horseshoe")
-library(horseshoe)
+continuous_shrinkage(data.frame(df), y, type = "lasso")
+continuous_shrinkage(data.frame(df), y, type = "ridge")
+continuous_shrinkage(data.frame(df), y, type = "horseshoe")
