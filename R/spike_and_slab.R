@@ -5,7 +5,7 @@ require(BoomSpikeSlab)
 
 spike_and_slab <- function(design_matrix = NULL, # predictors and design_matrix are the same thing just in different formats
                            predictors = NULL, 
-                           xdim = dim(design_matrix), 
+                           xdim = dim(design_matrix),
                            response = NULL, 
                            expected.r2 = .5, 
                            prior.df = .01, 
@@ -128,16 +128,3 @@ SpikeSlabPrior(xdim = 100,
                  expected_percent_nonzero = 1, 
                diagonal.shrinkage = 0,
                  prior.information.weight = .1)
-
-# xdim <- 50
-# prior <- ConditionalZellnerPrior(xdim,
-#   optional.coefficient.estimate = .5,
-#   expected.model.size = .4,
-#   prior.information.weight = .1,
-#   diagonal.shrinkage = 1,
-#   max.flips = 3,
-#   prior.inclusion.probabilities = NULL)
-# fit <- lm.spike(prior)
-
-
-
