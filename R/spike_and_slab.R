@@ -20,7 +20,7 @@ spike_and_slab <- function(design_matrix = NULL, # predictors and design_matrix 
                            mean.y = mean(response, na.rm = TRUE),
                            sdy = sd(as.numeric(response), na.rm = TRUE),
                            sigma.upper.limit = Inf) {
-  if (!is.na(predictors) && is.na(design_matrix) && !zellner_g && !is.na(xdim)) { # don't need to update xdim at this step b/c we will use else case (line 63)
+  if (!is.null(predictors) && is.null(design_matrix) && !zellner_g && !is.null(xdim)) { # don't need to update xdim at this step b/c we will use else case (line 63)
     design_matrix <- model.matrix(predictors)
   }
 
@@ -31,6 +31,7 @@ spike_and_slab <- function(design_matrix = NULL, # predictors and design_matrix 
         return()
       }
 
+      print("hello")
       # calculate the prior
       prior <- ConditionalZellnerPrior(xdim,
                                        optional.coefficient.estimate = optional.coefficient.estimate,
@@ -41,9 +42,9 @@ spike_and_slab <- function(design_matrix = NULL, # predictors and design_matrix 
                                        prior.inclusion.probabilities = prior.inclusion.probabilities) # use if predictor matrix is unknown
       prior
       # fit the model
-      fit <- lm.spike(y~x-1, niter = 1000, prior = prior)
-      fit
-      return(list(prior, fit))
+      # fit <- lm.spike(y~x-1, niter = 1000, prior = prior)
+      # fit
+      return(prior)
     } else {
       # calculate the prior
       prior <- SpikeSlabPrior(x = design_matrix,
@@ -104,6 +105,27 @@ spike_and_slab(x,
                zellner_g = FALSE,
                p = 100, 
                prior.information.weight = .1)
+
+spike_and_slab(x,
+               response = y,
+               expected.r2 = .5,
+               prior.df = .01,
+               expected_percent_nonzero = 1,
+               zellner_g = TRUE,
+               p = 100, 
+               prior.information.weight = .1)
+
+spike_and_slab(xdim = 50,
+               expected.r2 = .5,
+               prior.df = .01,
+               expected_percent_nonzero = 1,
+               zellner_g = FALSE,
+               p = 100, 
+               prior.information.weight = .1)
+
+p <- ConditionalZellnerPrior(xdim = 50,
+                        expected.model.size = 1,
+                        prior.information.weight = .1)
 
 x <- cbind(1, matrix(rnorm(900), ncol = 9))
 beta <- rep(0, 10)
